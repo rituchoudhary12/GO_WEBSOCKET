@@ -5,6 +5,8 @@ import (
 	"time"
 	
 	_ "github.com/mattn/go-sqlite3"
+	"fmt"
+	
 )
 
 type Log struct {
@@ -22,61 +24,53 @@ type SQLiteDatabase struct {
 	db *sql.DB
 }
 
-func NewSQLiteDatabase(filePath string) *SQLiteDatabase {
+
+func NewSQLiteDatabase(filePath string) (*SQLiteDatabase, error) {
 	db, err := sql.Open("sqlite3", filePath)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("Error opening database: %v", err)
 	}
 
-	_, err = db.Exec(`
-		CREATE TABLE IF NOT EXISTS logs (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			message TEXT,
-			timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-		)
-	`)
+	
+
+	query := `CREATE TABLE IF NOT EXISTS logs (id INTEGER PRIMARY KEY AUTOINCREMENT, message TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);`
+	_, err = db.Exec(query)
 	if err != nil {
-		panic(err)
+		db.Close()
+		return nil, fmt.Errorf("Error creating table: %v", err)
 	}
 
-	return &SQLiteDatabase{db: db}
+	return &SQLiteDatabase{db: db}, nil
 }
 
-// func (d *SQLiteDatabase) StoreLog(message string) (Log, error) {
-// 	res, err := d.db.Exec("INSERT INTO logs (message) VALUES (?)", message)
-// 	if err != nil {
-// 		return Log{}, err
-// 	}
 
-// 	id, _ := res.LastInsertId()
-// 	var logEntry Log
-// 	err = d.db.QueryRow(`
-// 		SELECT id, message, timestamp 
-// 		FROM logs 
-// 		WHERE id = ?
-// 	`, id).Scan(&logEntry.ID, &logEntry.Message, &logEntry.Timestamp)
 
-// 	return logEntry, err
-// }
+func (s *SQLiteDatabase) StoreLog(message string) (Log, error) {
+	// Check if the database connection is initialized
+	if s == nil || s.db == nil {
+		return Log{}, fmt.Errorf("database connection is not initialized")
+	}
 
-func (d *SQLiteDatabase) GetLogs() ([]Log, error) {
-	rows, err := d.db.Query("SELECT id, message, timestamp FROM logs ORDER BY id DESC")
+	res, err := s.db.Exec("INSERT INTO logs (message) VALUES (?)", message)
 	if err != nil {
-		return nil, err
+		return Log{}, err
 	}
-	defer rows.Close()
 
-	var logs []Log
-	for rows.Next() {
-		var log Log
-		err := rows.Scan(&log.ID, &log.Message, &log.Timestamp)
-		if err != nil {
-			return nil, err
-		}
-		logs = append(logs, log)
+	id, _ := res.LastInsertId()
+	var logEntry Log
+	err = s.db.QueryRow(`
+		SELECT id, message, timestamp 
+		FROM logs 
+		WHERE id = ?
+	`, id).Scan(&logEntry.ID, &logEntry.Message, &logEntry.Timestamp)
+
+	if err != nil {
+		return Log{}, fmt.Errorf("Error fetching log entry: %v", err)
 	}
-	return logs, nil
+
+	return logEntry, nil
 }
+
 
 func (d *SQLiteDatabase) Close() error {
 	return d.db.Close()
