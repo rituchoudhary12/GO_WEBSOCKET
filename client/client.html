@@ -6,12 +6,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Client</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h2>WebSocket Client</h2>
-    <input id="messageInput" type="text" placeholder="Type a message...">
-    <button onclick="sendMessage()">Send</button>
-    <p id="output"></p>
+    <div class="container">
+
+        <h2>WebSocket Client</h2>
+        <div class="chat-box">
+            <div id="messages"></div>
+        </div>
+        <div class="input-box"></div>
+            <input id="messageInput" type="text" placeholder="Type a message...">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
 
     <script>
         let socket;
