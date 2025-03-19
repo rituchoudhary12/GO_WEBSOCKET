@@ -1,0 +1,83 @@
+<!-- <!DOCTYPE html>
+<html>
+<body>
+    <input type="text" id="message">
+    <button onclick="sendMessage()">Send</button>
+    <div id="output"></div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8080/ws')
+        
+        ws.onmessage = function(event) {
+            const response = JSON.parse(event.data)
+            document.getElementById('output').innerHTML += 
+                `<p>Received: ${JSON.stringify(response)}</p>`
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message').value
+            ws.send(message)
+        }
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+</head>
+<body>
+    <h2>WebSocket Client</h2>
+    <input id="messageInput" type="text" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+    <p id="output"></p>
+
+    <script>
+        let socket;
+        let reconnectAttempts = 0;
+        let maxReconnectAttempts = 5; // Avoid infinite reconnect loops
+
+        function connectWebSocket() {
+            console.log("Attempting to connect...");
+            socket = new WebSocket("ws://localhost:9090/ws");
+
+            socket.onopen = function () {
+                console.log("Connected to WebSocket server");
+                reconnectAttempts = 0; // Reset reconnect attempts
+            };
+
+            socket.onmessage = function (event) {
+                document.getElementById("output").innerText += "Server: " + event.data + "\n";
+            };
+
+            socket.onerror = function (error) {
+                console.error("WebSocket Error:", error);
+            };
+
+            socket.onclose = function () {
+                console.warn("WebSocket closed. Attempting to reconnect...");
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    reconnectAttempts++;
+                    setTimeout(connectWebSocket, 3000); // Retry after 3 seconds
+                } else {
+                    console.error("Max reconnect attempts reached. Stopping.");
+                }
+            };
+        }
+
+        function sendMessage() {
+            let message = document.getElementById("messageInput").value;
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(message);
+            } else {
+                console.warn("WebSocket is not open");
+            }
+        }
+
+        connectWebSocket(); // Start WebSocket connection
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Ignore compiled Go binaries
+*.exe
+*.out
+*.o
+*.a
+
+# Ignore database files
+logs.db
+
+# Ignore dependency directories
+vendor/
+bin/
+
+# Ignore IDE files
+.vscode/
+.idea/
